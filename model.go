@@ -4,6 +4,11 @@ import (
 	"time"
 )
 
+type LoginInfo struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type Model struct {
 	ID        uint       `gorm:"primary_key" json:"id"`
 	CreatedAt time.Time  `json:"created_at"`

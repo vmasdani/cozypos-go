@@ -138,3 +138,41 @@ func DeleteItemTransaction(w http.ResponseWriter, r *http.Request) {
 
 	db.Delete(&itemTransaction)
 }
+
+// API key
+func GetAllApiKeys(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var apiKeys []ApiKey
+
+	db.Find(&apiKeys)
+
+	json.NewEncoder(w).Encode(apiKeys)
+}
+
+func PostApiKey(w http.ResponseWriter, r *http.Request) {
+	var apiKey ApiKey
+	json.NewDecoder(r.Body).Decode(&apiKey)
+
+	// Create new API key
+	db.Save(&apiKey)
+
+	json.NewEncoder(w).Encode(apiKey)
+}
+
+func DeleteApiKey(w http.ResponseWriter, r *http.Request) {
+	var apiKeyId = mux.Vars(r)["id"]
+
+	var apiKey ApiKey
+	db.Where("id = ?", apiKeyId).First(&apiKey)
+
+	db.Delete(apiKey)
+}
+
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var loginInfo LoginInfo
+	json.NewDecoder(r.Body).Decode(&loginInfo)
+
+	json.NewEncoder(w).Encode(loginInfo)
+}

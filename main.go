@@ -10,16 +10,16 @@ import (
 )
 
 var db *gorm.DB
-var router *mux.Router
 
 func main() {
 	fmt.Println("Starting Cozy POS backend service on port 8080!")
 
 	InitDb(&db)
-	InitRouters(&router)
 	defer db.Close()
 
-	// Populate() // If population is needed
+	r := mux.NewRouter()
+	InitRouters(&r)
 
-	http.ListenAndServe(":8080", router)
+	// Populate() // If population is needed
+	http.ListenAndServe(":8080", r)
 }
