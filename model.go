@@ -23,10 +23,11 @@ type ApiKey struct {
 
 type Item struct {
 	Model
-	Name              string            `gorm:"unique;not null" json:"name"`
-	Desc              string            `json:"desc"`
-	Price             int               `json:"price"`
-	ItemsTransactions []ItemTransaction `json:"items_transactions"`
+	Name               string            `gorm:"unique;not null" json:"name"`
+	Desc               string            `json:"desc"`
+	Price              int               `json:"price"`
+	ManufacturingPrice int               `json:"manufacturing_price"`
+	ItemsTransactions  []ItemTransaction `json:"items_transactions"`
 }
 
 type Transaction struct {
