@@ -56,5 +56,6 @@ type ItemTransaction struct {
 type Project struct {
 	Model
 	Name         string        `json:"name"`
+	Date         time.Time     `json:"date"`
 	Transactions []Transaction `json:"transactions"`
 }

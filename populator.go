@@ -65,6 +65,14 @@ func Populate() {
 		if priceErr == nil && manufacturingPriceErr == nil {
 			fmt.Printf("Name: %s, Desc: %s, Price: %d, Manuf. Price: %d\n", name, desc, price, manufacturingPrice)
 		}
+
+		newItem := Item{
+			Name:               name,
+			Desc:               desc,
+			Price:              price,
+			ManufacturingPrice: manufacturingPrice}
+
+		db.Save(&newItem)
 	})
 
 	// Items

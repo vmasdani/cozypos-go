@@ -68,7 +68,10 @@ func GetAllTransactions(w http.ResponseWriter, r *http.Request) {
 		}
 
 		transactionViews = append(transactionViews, TransactionView{
-			Transaction: transaction,
+			ID:          transaction.ID,
+			Type:        transaction.Type,
+			CustomPrice: transaction.CustomPrice,
+			Cashier:     transaction.Cashier,
 			TotalPrice:  totalPrice})
 	}
 
@@ -116,9 +119,9 @@ func GetAllItemsTransactions(w http.ResponseWriter, r *http.Request) {
 		db.Where("id = ?", itemTransaction.TransactionID).First(&foundTransaction)
 
 		itemsTransactionsView = append(itemsTransactionsView, ItemTransactionView{
-			ItemTransaction: itemTransaction,
-			Transaction:     foundTransaction,
-			Item:            foundItem})
+			ID:   itemTransaction.ID,
+			Qty:  itemTransaction.Qty,
+			Item: foundItem})
 	}
 
 	json.NewEncoder(w).Encode(itemsTransactionsView)
@@ -242,7 +245,8 @@ func GetAllProjects(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var projects []Project
-	db.Preload("Transactions").Find(&projects)
+	// db.Preload("Transactions").Find(&projects)
+	db.Find(&projects)
 
 	json.NewEncoder(w).Encode(projects)
 }
@@ -252,9 +256,61 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	var project Project
-	db.Where("id = ?", id).First(&project)
+	db.Where("id = ?", id).Preload("Transactions").First(&project)
 
-	json.NewEncoder(w).Encode(&project)
+	transactionViews := []TransactionView{}
+
+	// Loop transactions
+	for _, transaction := range project.Transactions {
+		var foundTransaction Transaction
+		db.Preload("ItemsTransactions").First(&foundTransaction, transaction.ID)
+
+		// Count total price
+		totalPrice := 0
+
+		itemTransactionViews := []ItemTransactionView{}
+
+		for _, itemTransaction := range foundTransaction.ItemsTransactions {
+			var foundItem Item
+			db.First(&foundItem, itemTransaction.ItemID)
+
+			totalPrice += itemTransaction.Qty * foundItem.Price
+
+			itemTransactionView := ItemTransactionView{
+				ID:   itemTransaction.ID,
+				Qty:  itemTransaction.Qty,
+				Item: foundItem}
+
+			newItemTransactionViews := append(itemTransactionViews, itemTransactionView)
+			itemTransactionViews = newItemTransactionViews
+		}
+
+		transactionView := TransactionView{
+			ID:                transaction.ID,
+			Type:              transaction.Type,
+			CustomPrice:       transaction.CustomPrice,
+			Cashier:           transaction.Cashier,
+			TotalPrice:        totalPrice,
+			ItemsTransactions: itemTransactionViews}
+
+		newTransactionViews := append(transactionViews, transactionView)
+		transactionViews = newTransactionViews
+	}
+
+	projectView := ProjectView{
+		ID:           project.ID,
+		Name:         project.Name,
+		Transactions: transactionViews}
+
+	fmt.Println("Project:")
+	fmt.Println(projectView)
+
+	// fmt.Println("Transactions:")
+	// for _, transaction := range project.Transactions {
+	// 	fmt.Println(transaction)
+	// }
+
+	json.NewEncoder(w).Encode(&projectView)
 }
 
 func PostProject(w http.ResponseWriter, r *http.Request) {

@@ -20,6 +20,6 @@ func main() {
 	r := mux.NewRouter()
 	InitRouters(&r)
 
-	Populate() // If population is needed
+	// Populate() // If population is needed
 	http.ListenAndServe(":8080", r)
 }
