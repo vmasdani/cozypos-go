@@ -2,16 +2,32 @@ package main
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/joho/godotenv"
 
 	"github.com/jinzhu/gorm"
 )
 
 func InitDb(db **gorm.DB) {
-	var err error
-	*db, err = gorm.Open("mysql", "valianmasdani:@/cozypos?parseTime=True")
+	var dbErr error
+	dotenvErr := godotenv.Load()
 
-	if err != nil {
-		fmt.Println(err)
+	if dotenvErr != nil {
+		fmt.Println(dotenvErr)
+		panic("Failed loading dotenv.")
+	}
+
+	dbName := os.Getenv("DB_NAME")
+	dbUsername := os.Getenv("DB_USERNAME")
+	dbPassword := os.Getenv("DB_PASSWORD")
+
+	dbUrl := fmt.Sprintf("%s:%s@/%s?parseTime=True&loc=Local", dbUsername, dbPassword, dbName)
+
+	*db, dbErr = gorm.Open("mysql", dbUrl)
+
+	if dbErr != nil {
+		fmt.Println(dbErr)
 		panic("Failed to connect to database!")
 	}
 

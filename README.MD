@@ -4,4 +4,10 @@ Run this program:
 - Prepare database
 - Run with `go build && ./cozypos-go`
 - Generate secret with `http://localhost:8080/generate`
-- Change `SECRET=your_secret` in `.env`
+- Make .env file in root directory containing:
+```
+SECRET=<your_generated_secret>
+DB_NAME=<your_db_name>
+DB_USERNAME=<your_db_username>
+DB_PASSWORD=<your_db_password>
+```
