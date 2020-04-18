@@ -7,9 +7,19 @@ import (
 	"strings"
 )
 
+var noAuthUris = []string{"/generate", "/hello", "/login"}
+
 func AuthorizationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("We are accepting.")
+		requestUri := r.RequestURI
+		fmt.Printf("We are accepting. %s\n", requestUri)
+
+		for _, uri := range noAuthUris {
+			if strings.HasPrefix(requestUri, uri) == true {
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
 
 		for header := range r.Header {
 			fmt.Printf("%s: %s\n", header, r.Header.Get(header))
@@ -42,6 +52,7 @@ func AuthorizationMiddleware(next http.Handler) http.Handler {
 		}
 
 		fmt.Println(apiKey)
+		r.Header.Set("Username", username)
 
 		next.ServeHTTP(w, r)
 	})

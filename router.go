@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gorilla/mux"
 )
@@ -10,8 +13,27 @@ import (
 func InitRouters(r **mux.Router) {
 	*r = mux.NewRouter()
 
-	(*r).HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	(*r).HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Hello world.")
+	})
+
+	// Generate bcrypted password to put in the .env file, needs ?secret parameter
+
+	(*r).HandleFunc("/generate", func(w http.ResponseWriter, r *http.Request) {
+		key := r.URL.Query()["secret"]
+
+		if len(key) > 0 {
+			unhashedSecret := key[0]
+			secret, _ := bcrypt.GenerateFromPassword([]byte(unhashedSecret), bcrypt.DefaultCost)
+
+			secretBase64 := base64.StdEncoding.EncodeToString(secret)
+
+			fmt.Printf("Secret to hash: %s\n", secretBase64)
+			fmt.Fprintf(w, "%s", secretBase64)
+		} else {
+			http.Error(w, "secret paramter not found!", http.StatusInternalServerError)
+			return
+		}
 	})
 
 	// Items

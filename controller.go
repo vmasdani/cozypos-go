@@ -78,6 +78,7 @@ func GetAllTransactions(w http.ResponseWriter, r *http.Request) {
 
 func PostTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	fmt.Printf("Username: %s\n", r.Header.Get("Username"))
 
 	var transaction Transaction
 	json.NewDecoder(r.Body).Decode(&transaction)
@@ -187,7 +188,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	err := godotenv.Load()
 
 	if err != nil {
+		fmt.Println("Error getting env file")
 		http.Error(w, "Error getting env file.", http.StatusInternalServerError)
+		return
 	}
 	secretCodeBase64 := os.Getenv("SECRET")
 	secretCode, _ := base64.StdEncoding.DecodeString(secretCodeBase64)
@@ -201,8 +204,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Password do not match!")
 		http.Error(w, "Password incorrect!", http.StatusUnauthorized)
 		return
-	} else {
-		fmt.Println("Password matches!")
 	}
 
 	if generateSecretError == nil {
