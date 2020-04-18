@@ -18,8 +18,9 @@ func InitDb(db **gorm.DB) {
 	(*db).SingularTable(true)
 
 	// Migrations
-	(*db).AutoMigrate(&ApiKey{})
+	(*db).AutoMigrate(&APIKey{})
 	(*db).AutoMigrate(&Item{})
 	(*db).AutoMigrate(&Transaction{})
 	(*db).AutoMigrate(&ItemTransaction{})
+	(*db).AutoMigrate(&Project{})
 }

@@ -7,23 +7,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type RouteHandler mux.Router
-
-func authorizationMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("We are accepting.")
-
-		for header := range r.Header {
-			fmt.Printf("%s: %s\n", header, r.Header.Get(header))
-		}
-
-		fmt.Printf("Accept: %s\n", r.Header.Get("Accept"))
-		fmt.Printf("Connection: %s\n", r.Header.Get("Connection"))
-
-		next.ServeHTTP(w, r)
-	})
-}
-
 func InitRouters(r **mux.Router) {
 	*r = mux.NewRouter()
 
@@ -54,5 +37,11 @@ func InitRouters(r **mux.Router) {
 	// Login
 	(*r).HandleFunc("/login", LoginHandler).Methods("POST")
 
-	(*r).Use(authorizationMiddleware)
+	// Project
+	(*r).HandleFunc("/projects", GetAllProjects).Methods("GET")
+	(*r).HandleFunc("/projects/{id}", GetProject).Methods("GET")
+	(*r).HandleFunc("/projects", PostProject).Methods("POST")
+	(*r).HandleFunc("/projects/{id}", DeleteProject).Methods("DELETE")
+
+	(*r).Use(AuthorizationMiddleware)
 }

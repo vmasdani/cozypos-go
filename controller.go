@@ -1,9 +1,17 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
+	"os"
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/joho/godotenv"
 
 	"github.com/gorilla/mux"
 )
@@ -142,7 +150,7 @@ func DeleteItemTransaction(w http.ResponseWriter, r *http.Request) {
 // API key
 func GetAllApiKeys(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var apiKeys []ApiKey
+	var apiKeys []APIKey
 
 	db.Find(&apiKeys)
 
@@ -150,7 +158,9 @@ func GetAllApiKeys(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostApiKey(w http.ResponseWriter, r *http.Request) {
-	var apiKey ApiKey
+	w.Header().Set("Content-Type", "application/json")
+
+	var apiKey APIKey
 	json.NewDecoder(r.Body).Decode(&apiKey)
 
 	// Create new API key
@@ -162,7 +172,7 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 func DeleteApiKey(w http.ResponseWriter, r *http.Request) {
 	var apiKeyId = mux.Vars(r)["id"]
 
-	var apiKey ApiKey
+	var apiKey APIKey
 	db.Where("id = ?", apiKeyId).First(&apiKey)
 
 	db.Delete(apiKey)
@@ -174,5 +184,99 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var loginInfo LoginInfo
 	json.NewDecoder(r.Body).Decode(&loginInfo)
 
-	json.NewEncoder(w).Encode(loginInfo)
+	err := godotenv.Load()
+
+	if err != nil {
+		http.Error(w, "Error getting env file.", http.StatusInternalServerError)
+	}
+	secretCodeBase64 := os.Getenv("SECRET")
+	secretCode, _ := base64.StdEncoding.DecodeString(secretCodeBase64)
+	secretCodeBytes := []byte(secretCode)
+	passwordBytes := []byte(loginInfo.Password)
+
+	loginErr := bcrypt.CompareHashAndPassword(secretCodeBytes, passwordBytes)
+	secretHash, generateSecretError := bcrypt.GenerateFromPassword(passwordBytes, bcrypt.DefaultCost)
+
+	if loginErr != nil {
+		fmt.Println("Password do not match!")
+		http.Error(w, "Password incorrect!", http.StatusUnauthorized)
+		return
+	} else {
+		fmt.Println("Password matches!")
+	}
+
+	if generateSecretError == nil {
+		fmt.Println(string(secretHash))
+	}
+
+	// Generate api key
+	timestamp := time.Now().Unix()
+	randNum := rand.Float64()
+
+	randToStr := fmt.Sprintf("%d%e", timestamp, randNum)
+
+	unhashedApiKey := []byte(randToStr)
+
+	keyBytes, err := bcrypt.GenerateFromPassword(unhashedApiKey, bcrypt.DefaultCost)
+	keyBase64 := base64.StdEncoding.EncodeToString(keyBytes)
+
+	usernameBytes := []byte(loginInfo.Username)
+	usernameBase64 := base64.StdEncoding.EncodeToString(usernameBytes)
+
+	apiKey := fmt.Sprintf("%s:%s", usernameBase64, keyBase64)
+
+	fmt.Println(usernameBase64)
+	fmt.Println(keyBase64)
+
+	// bcrypt.GeneratePassword([]byte())
+
+	fmt.Printf("Secret code: %s\n", secretCode)
+	fmt.Printf("Api key: %s\n", apiKey)
+
+	fmt.Fprintf(w, "%s", apiKey)
+}
+
+// Project
+func GetAllProjects(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var projects []Project
+	db.Preload("Transactions").Find(&projects)
+
+	json.NewEncoder(w).Encode(projects)
+}
+
+func GetProject(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id := mux.Vars(r)["id"]
+
+	var project Project
+	db.Where("id = ?", id).First(&project)
+
+	json.NewEncoder(w).Encode(&project)
+}
+
+func PostProject(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var project Project
+	err := json.NewDecoder(r.Body).Decode(&project)
+
+	if err != nil {
+		http.Error(w, "Error parsing Request!", http.StatusInternalServerError)
+		return
+	}
+
+	db.Save(&project)
+	json.NewEncoder(w).Encode(project)
+}
+
+func DeleteProject(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id := mux.Vars(r)["id"]
+
+	var project Project
+	db.First(&project, id)
+
+	db.Delete(&project)
 }

@@ -4,11 +4,13 @@ import (
 	"time"
 )
 
+// LoginInfo : Login info request struct
 type LoginInfo struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
+// Model : Essential GORM model
 type Model struct {
 	ID        uint       `gorm:"primary_key" json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
@@ -16,11 +18,13 @@ type Model struct {
 	DeletedAt *time.Time `json:"deleted_at"`
 }
 
-type ApiKey struct {
+// ApiKey : table for storing API keys
+type APIKey struct {
 	Model
-	Key string
+	APIKey string `json:"api_key"`
 }
 
+// Item : table for storing items/inventory list
 type Item struct {
 	Model
 	Name               string            `gorm:"unique;not null" json:"name"`
@@ -30,17 +34,27 @@ type Item struct {
 	ItemsTransactions  []ItemTransaction `json:"items_transactions"`
 }
 
+// Transaction : table for storing transactions
 type Transaction struct {
 	Model
 	Type              string            `json:"type"`
 	CustomPrice       int               `json:"custom_price"`
 	Cashier           string            `json:"cashier"`
 	ItemsTransactions []ItemTransaction `json:"items_transactions"`
+	ProjectID         uint              `json:"project_id"`
 }
 
+// ItemTransaction : table for storing ItemTransaction
 type ItemTransaction struct {
 	Model
 	Qty           int  `json:"qty"`
 	ItemID        uint `json:"item_id"`
 	TransactionID uint `json:"transaction_id"`
+}
+
+// Project : table for storing projects
+type Project struct {
+	Model
+	Name         string        `json:"name"`
+	Transactions []Transaction `json:"transactions"`
 }
