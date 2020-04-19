@@ -43,6 +43,7 @@ func InitRouters(r **mux.Router) {
 
 	// Transactions
 	(*r).HandleFunc("/transactions", GetAllTransactions).Methods("GET")
+	(*r).HandleFunc("/transactions/{id}", GetTransaction).Methods("GET")
 	(*r).HandleFunc("/transactions", PostTransaction).Methods("POST")
 	(*r).HandleFunc("/transactions/{id}", DeleteTransaction).Methods("DELETE")
 

@@ -3,10 +3,13 @@ package main
 import "time"
 
 type ProjectView struct {
-	ID           uint              `json:"id"`
-	Name         string            `json:"name"`
-	Date         time.Time         `json:"Date"`
-	Transactions []TransactionView `json:"transactions"`
+	ID                        uint              `json:"id"`
+	Name                      string            `json:"name"`
+	Date                      time.Time         `json:"date"`
+	Transactions              []TransactionView `json:"transactions"`
+	ProjectManufacturingPrice uint              `json:"project_manufacturing_price"`
+	ProjectRevenue            uint              `json:"project_revenue"`
+	TotalRevenue              uint              `json:"total_revenue"`
 }
 
 type TransactionView struct {
@@ -16,6 +19,9 @@ type TransactionView struct {
 	Cashier           string                `json:"cashier"`
 	ItemsTransactions []ItemTransactionView `json:"items_transactions"`
 	TotalPrice        int                   `json:"total_price"`
+	CreatedAt         time.Time             `json:"created_at"`
+	UpdatedAt         time.Time             `json:"updated_at"`
+	ProjectID         uint                  `json:"project_id"`
 }
 
 type ItemTransactionView struct {

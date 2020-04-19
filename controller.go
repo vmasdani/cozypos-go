@@ -51,32 +51,81 @@ func GetAllTransactions(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var transactions []Transaction
-	db.Preload("ItemsTransactions").Find(&transactions)
+	// db.Preload("ItemsTransactions").Find(&transactions)
+	db.Find(&transactions)
 
-	transactionViews := []TransactionView{}
+	// transactionViews := []TransactionView{}
 
-	for _, transaction := range transactions {
+	// for _, transaction := range transactions {
 
-		// Sum all accumulated item transactions
-		totalPrice := 0
+	// 	// Sum all accumulated item transactions
+	// 	totalPrice := 0
 
-		for _, itemTransaction := range transaction.ItemsTransactions {
-			var foundItem Item
-			db.Where("id = ?", itemTransaction.ItemID).First(&foundItem)
+	// 	for _, itemTransaction := range transaction.ItemsTransactions {
+	// 		var foundItem Item
+	// 		db.Where("id = ?", itemTransaction.ItemID).First(&foundItem)
 
-			totalPrice += itemTransaction.Qty * foundItem.Price
-		}
+	// 		totalPrice += itemTransaction.Qty * foundItem.Price
+	// 	}
 
-		transactionViews = append(transactionViews, TransactionView{
-			ID:          transaction.ID,
-			Type:        transaction.Type,
-			CustomPrice: transaction.CustomPrice,
-			Cashier:     transaction.Cashier,
-			TotalPrice:  totalPrice})
-	}
+	// 	transactionViews = append(transactionViews, TransactionView{
+	// 		ID:          transaction.ID,
+	// 		Type:        transaction.Type,
+	// 		CustomPrice: transaction.CustomPrice,
+	// 		Cashier:     transaction.Cashier,
+	// 		TotalPrice:  totalPrice})
+	// }
 
 	// Finally, serialize the TransactionView
-	json.NewEncoder(w).Encode(transactionViews)
+	json.NewEncoder(w).Encode(transactions)
+}
+
+func GetTransaction(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	w.Header().Set("Content-Type", "application/json")
+
+	totalPrice := 0
+
+	var transaction Transaction
+	if db.First(&transaction, id).RecordNotFound() {
+		http.Error(w, "Transaction not found", http.StatusInternalServerError)
+	}
+
+	var itemsTransactions []ItemTransaction
+	db.Where("transaction_id = ?", transaction.ID).Find(&itemsTransactions)
+
+	itemTransactionViews := []ItemTransactionView{}
+
+	for _, itemTransaction := range itemsTransactions {
+		var foundItem Item
+		db.First(&foundItem, itemTransaction.ItemID)
+
+		itemTransactionView := ItemTransactionView{
+			ID:   itemTransaction.ID,
+			Qty:  itemTransaction.Qty,
+			Item: foundItem}
+
+		newItemTransactionViews := append(itemTransactionViews, itemTransactionView)
+		itemTransactionViews = newItemTransactionViews
+
+		// Update total price:
+		totalPrice += itemTransaction.Qty * foundItem.Price
+	}
+
+	transactionView := TransactionView{
+		ID:                transaction.ID,
+		Type:              transaction.Type,
+		CustomPrice:       transaction.CustomPrice,
+		Cashier:           transaction.Cashier,
+		ItemsTransactions: itemTransactionViews,
+		TotalPrice:        totalPrice,
+		CreatedAt:         transaction.CreatedAt,
+		UpdatedAt:         transaction.UpdatedAt,
+		ProjectID:         transaction.ProjectID}
+
+	fmt.Println(transactionView)
+
+	json.NewEncoder(w).Encode(transactionView)
 }
 
 func PostTransaction(w http.ResponseWriter, r *http.Request) {
@@ -255,6 +304,14 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	id := mux.Vars(r)["id"]
 
+	projectManufacturingPrice := 0
+	totalRevenue := 0
+	projectRevenue := 0
+
+	fmt.Println(projectManufacturingPrice)
+	fmt.Println(totalRevenue)
+	fmt.Println(projectRevenue)
+
 	var project Project
 	db.Where("id = ?", id).Preload("Transactions").First(&project)
 
@@ -267,6 +324,7 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 
 		// Count total price
 		totalPrice := 0
+		manufacturingPrice := 0
 
 		itemTransactionViews := []ItemTransactionView{}
 
@@ -283,24 +341,43 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 
 			newItemTransactionViews := append(itemTransactionViews, itemTransactionView)
 			itemTransactionViews = newItemTransactionViews
+
+			// Update manufacturing price
+			manufacturingPrice += itemTransaction.Qty * foundItem.ManufacturingPrice
 		}
 
 		transactionView := TransactionView{
-			ID:                transaction.ID,
-			Type:              transaction.Type,
-			CustomPrice:       transaction.CustomPrice,
-			Cashier:           transaction.Cashier,
-			TotalPrice:        totalPrice,
-			ItemsTransactions: itemTransactionViews}
+			ID:          transaction.ID,
+			Type:        transaction.Type,
+			CustomPrice: transaction.CustomPrice,
+			Cashier:     transaction.Cashier,
+			TotalPrice:  totalPrice}
+		// ItemsTransactions: itemTransactionViews} // Uncomment this to debug items transactions in project
 
 		newTransactionViews := append(transactionViews, transactionView)
 		transactionViews = newTransactionViews
+
+		// Update total revenue
+		switch transaction.Type {
+		case "sell":
+			projectRevenue += totalPrice
+		case "stock_in":
+			projectManufacturingPrice += manufacturingPrice
+		case "auction":
+			projectRevenue += transaction.CustomPrice
+		default:
+			fmt.Printf("Transaction ID: %d does not belong into any transaction type.\n", transaction.ID)
+		}
 	}
 
 	projectView := ProjectView{
-		ID:           project.ID,
-		Name:         project.Name,
-		Transactions: transactionViews}
+		ID:                        project.ID,
+		Name:                      project.Name,
+		Date:                      project.Date,
+		TotalRevenue:              uint(totalRevenue),
+		ProjectRevenue:            uint(projectRevenue),
+		ProjectManufacturingPrice: uint(projectManufacturingPrice),
+		Transactions:              transactionViews}
 
 	fmt.Println("Project:")
 	fmt.Println(projectView)
