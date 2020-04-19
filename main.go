@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/handlers"
+
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -21,5 +23,5 @@ func main() {
 	InitRouters(&r)
 
 	// Populate() // If population is needed
-	http.ListenAndServe(":8080", r)
+	http.ListenAndServe(":8080", handlers.CORS()(r))
 }
