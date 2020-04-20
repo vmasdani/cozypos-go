@@ -32,6 +32,23 @@ type Item struct {
 	Price              int               `json:"price"`
 	ManufacturingPrice int               `json:"manufacturing_price"`
 	ItemsTransactions  []ItemTransaction `json:"items_transactions"`
+	ItemStockIns       []ItemStockIn     `json:"item_stock_ins"`
+	ItemProjects       []ItemProject     `json:"item_project"`
+}
+
+// ItemStockIn : Item stock-in history
+type ItemStockIn struct {
+	Model
+	ItemID uint `json:"item_id"`
+	Qty    int  `json:"qty"`
+}
+
+// ItemProject : Item reservation for project
+type ItemProject struct {
+	Model
+	ItemID    uint `json:"item_id"`
+	ProjectID uint `json:"project_id"`
+	Qty       int  `json:"qty"`
 }
 
 // Transaction : table for storing transactions
@@ -58,4 +75,5 @@ type Project struct {
 	Name         string        `json:"name"`
 	Date         time.Time     `json:"date"`
 	Transactions []Transaction `json:"transactions"`
+	ItemProjects []ItemProject `json:"item_projects"`
 }

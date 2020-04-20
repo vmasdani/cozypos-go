@@ -18,13 +18,57 @@ import (
 
 // Item
 func GetAllItems(w http.ResponseWriter, r *http.Request) {
-	var allItems []Item
-	db.Preload("ItemsTransactions").Find(&allItems)
-
-	fmt.Println(allItems)
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(allItems)
+	var allItems []Item
+	db.Preload("ItemsTransactions").Preload("ItemStockIns").Find(&allItems)
+
+	itemViews := []ItemView{}
+
+	for _, item := range allItems {
+		totalQty := 0
+		totalSold := 0
+		totalReserved := 0
+
+		// Count total sold
+		for _, itemTransaction := range item.ItemsTransactions {
+			totalSold += itemTransaction.Qty
+		}
+
+		// Count total qty
+		for _, itemStockIn := range item.ItemStockIns {
+			totalQty += itemStockIn.Qty
+		}
+
+		// Count total reserved
+		for _, itemProject := range item.ItemProjects {
+			totalReserved += itemProject.Qty
+		}
+
+		newItemView := ItemView{
+			ID:                 item.ID,
+			Name:               item.Name,
+			Desc:               item.Desc,
+			Price:              item.Price,
+			ManufacturingPrice: item.ManufacturingPrice,
+			Qty:                totalQty,
+			Reserved:           totalReserved,
+			Sold:               totalSold}
+
+		newItemViews := append(itemViews, newItemView)
+		itemViews = newItemViews
+	}
+
+	json.NewEncoder(w).Encode(itemViews)
+}
+
+func GetItem(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id := mux.Vars(r)["id"]
+
+	var foundItem Item
+	db.First(&foundItem, id)
+
+	json.NewEncoder(w).Encode(foundItem)
 }
 
 func PostItem(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +79,18 @@ func PostItem(w http.ResponseWriter, r *http.Request) {
 
 	db.Save(&item)
 	json.NewEncoder(w).Encode(item)
+}
+
+func StockItemIn(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	fmt.Println(r.Body)
+
+	var itemStockIn ItemStockIn
+	json.NewDecoder(r.Body).Decode(&itemStockIn)
+
+	db.Save(&itemStockIn)
+	json.NewEncoder(w).Encode(itemStockIn)
 }
 
 func DeleteItem(w http.ResponseWriter, r *http.Request) {
@@ -388,6 +444,16 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	json.NewEncoder(w).Encode(&projectView)
+}
+
+func GetProjectItems(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id := mux.Vars(r)["id"]
+
+	var foundProject Project
+	db.Preload("ItemProjects").First(&foundProject, id)
+
+	json.NewEncoder(w).Encode(foundProject)
 }
 
 func PostProject(w http.ResponseWriter, r *http.Request) {

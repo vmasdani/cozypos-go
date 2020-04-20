@@ -39,4 +39,6 @@ func InitDb(db **gorm.DB) {
 	(*db).AutoMigrate(&Transaction{})
 	(*db).AutoMigrate(&ItemTransaction{})
 	(*db).AutoMigrate(&Project{})
+	(*db).AutoMigrate(&ItemProject{})
+	(*db).AutoMigrate(&ItemStockIn{})
 }

@@ -29,3 +29,14 @@ type ItemTransactionView struct {
 	Qty  int  `json:"qty"`
 	Item Item `json:"item"`
 }
+
+type ItemView struct {
+	ID                 uint   `json:"id"`
+	Name               string `json:"name"`
+	Desc               string `json:"desc"`
+	Price              int    `json:"price"`
+	ManufacturingPrice int    `json:"manufacturing_price"`
+	Qty                int    `json:"qty"`
+	Reserved           int    `json:"reserved"`
+	Sold               int    `json:"sold"`
+}
