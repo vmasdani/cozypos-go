@@ -66,9 +66,29 @@ func GetItem(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	var foundItem Item
-	db.First(&foundItem, id)
+	db.Preload("ItemsTransactions").Preload("ItemStockIns").First(&foundItem, id)
 
-	json.NewEncoder(w).Encode(foundItem)
+	totalQty := 0
+
+	// Count item in
+	for _, itemStockIn := range foundItem.ItemStockIns {
+		totalQty += itemStockIn.Qty
+	}
+
+	// Count item sold
+	for _, itemTransaction := range foundItem.ItemsTransactions {
+		totalQty -= itemTransaction.Qty
+	}
+
+	itemView := ItemView{
+		ID:                 foundItem.ID,
+		Name:               foundItem.Name,
+		Desc:               foundItem.Desc,
+		Price:              foundItem.Price,
+		ManufacturingPrice: foundItem.ManufacturingPrice,
+		Qty:                totalQty}
+
+	json.NewEncoder(w).Encode(itemView)
 }
 
 func PostItem(w http.ResponseWriter, r *http.Request) {
