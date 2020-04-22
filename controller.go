@@ -20,7 +20,7 @@ import (
 func GetAllItems(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var allItems []Item
-	db.Preload("ItemsTransactions").Preload("ItemStockIns").Find(&allItems)
+	db.Order("id desc").Preload("ItemsTransactions").Preload("ItemStockIns").Find(&allItems)
 
 	itemViews := []ItemView{}
 
@@ -97,7 +97,14 @@ func PostItem(w http.ResponseWriter, r *http.Request) {
 	var item Item
 	json.NewDecoder(r.Body).Decode(&item)
 
-	db.Save(&item)
+	insertion := db.Save(&item)
+
+	if insertion.Error != nil {
+		http.Error(w, "Failed to create new item.", http.StatusInternalServerError)
+	}
+
+	w.WriteHeader(http.StatusCreated)
+
 	json.NewEncoder(w).Encode(item)
 }
 
@@ -109,7 +116,13 @@ func StockItemIn(w http.ResponseWriter, r *http.Request) {
 	var itemStockIn ItemStockIn
 	json.NewDecoder(r.Body).Decode(&itemStockIn)
 
-	db.Save(&itemStockIn)
+	insertion := db.Save(&itemStockIn)
+
+	if insertion.Error != nil {
+		http.Error(w, "Error stocking in.", http.StatusInternalServerError)
+	}
+
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(itemStockIn)
 }
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/handlers"
+	"github.com/rs/cors"
 
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
@@ -22,6 +22,8 @@ func main() {
 	r := mux.NewRouter()
 	InitRouters(&r)
 
+	handler := cors.Default().Handler(r)
+
 	// Populate() // If population is needed
-	http.ListenAndServe(":8080", handlers.CORS()(r))
+	http.ListenAndServe(":8080", handler)
 }
