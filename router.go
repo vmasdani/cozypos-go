@@ -39,6 +39,7 @@ func InitRouters(r **mux.Router) {
 	// Items
 	(*r).HandleFunc("/items", GetAllItems).Methods("GET")
 	(*r).HandleFunc("/items/{id}", GetItem).Methods("GET")
+	(*r).HandleFunc("/items-search", SearchItem).Methods("GET")
 	(*r).HandleFunc("/items", PostItem).Methods("POST")
 	(*r).HandleFunc("/items/stock-in", StockItemIn).Methods("POST")
 	(*r).HandleFunc("/items/{id}", DeleteItem).Methods("DELETE")

@@ -91,6 +91,23 @@ func GetItem(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(itemView)
 }
 
+func SearchItem(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	itemName := r.URL.Query()["name"]
+
+	if len(itemName) > 0 {
+		itemLike := fmt.Sprintf("%%%s%%", itemName[0])
+		var foundItems []Item
+		db.Limit(10).Where("name LIKE ?", itemLike).Find(&foundItems)
+
+		json.NewEncoder(w).Encode(foundItems)
+	} else {
+		http.Error(w, "Parameter name does not exist.", http.StatusBadRequest)
+	}
+
+	// json.NewEncoder(w).Encode()
+}
+
 func PostItem(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
