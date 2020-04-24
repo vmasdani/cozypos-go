@@ -253,6 +253,7 @@ func PostTransaction(w http.ResponseWriter, r *http.Request) {
 		db.Save(&itemTransaction)
 	}
 
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(transaction)
 }
 
@@ -429,7 +430,13 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(projectRevenue)
 
 	var project Project
-	db.Where("id = ?", id).Preload("Transactions").First(&project)
+	db.Where("id = ?", id).First(&project)
+
+	// Put sorted transactions here
+	var transactions []Transaction
+	db.Order("id desc").Where("project_id = ?", project.ID).Find(&transactions)
+
+	project.Transactions = transactions
 
 	transactionViews := []TransactionView{}
 
@@ -467,7 +474,8 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 			Type:        transaction.Type,
 			CustomPrice: transaction.CustomPrice,
 			Cashier:     transaction.Cashier,
-			TotalPrice:  totalPrice}
+			TotalPrice:  totalPrice,
+			CreatedAt:   transaction.CreatedAt}
 		// ItemsTransactions: itemTransactionViews} // Uncomment this to debug items transactions in project
 
 		newTransactionViews := append(transactionViews, transactionView)
@@ -476,11 +484,19 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 		// Update total revenue
 		switch transaction.Type {
 		case "sell":
-			projectRevenue += totalPrice
+			if transaction.CustomPrice > 0 {
+				projectRevenue += transaction.CustomPrice
+			} else {
+				projectRevenue += totalPrice
+			}
 		case "stock_in":
 			projectManufacturingPrice += manufacturingPrice
 		case "auction":
-			projectRevenue += transaction.CustomPrice
+			if transaction.CustomPrice > 0 {
+				projectRevenue += transaction.CustomPrice
+			} else {
+				projectRevenue += totalPrice
+			}
 		default:
 			fmt.Printf("Transaction ID: %d does not belong into any transaction type.\n", transaction.ID)
 		}
