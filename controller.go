@@ -208,6 +208,7 @@ func GetTransaction(w http.ResponseWriter, r *http.Request) {
 
 		itemTransactionView := ItemTransactionView{
 			ID:   itemTransaction.ID,
+			UUID: itemTransaction.UUID,
 			Qty:  itemTransaction.Qty,
 			Item: foundItem}
 
@@ -220,6 +221,7 @@ func GetTransaction(w http.ResponseWriter, r *http.Request) {
 
 	transactionView := TransactionView{
 		ID:                transaction.ID,
+		UUID:              transaction.UUID,
 		Type:              transaction.Type,
 		CustomPrice:       transaction.CustomPrice,
 		Cashier:           transaction.Cashier,
@@ -244,6 +246,12 @@ func PostTransaction(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Transaction to save", transaction)
 
 	db.Save(&transaction)
+
+	// Save ItemsTransactions
+	for _, itemTransaction := range transaction.ItemsTransactions {
+		// var itemTransaction ItemTransaction
+		db.Save(&itemTransaction)
+	}
 
 	json.NewEncoder(w).Encode(transaction)
 }
@@ -299,6 +307,8 @@ func PostItemTransaction(w http.ResponseWriter, r *http.Request) {
 
 func DeleteItemTransaction(w http.ResponseWriter, r *http.Request) {
 	itemTransactionId := mux.Vars(r)["id"]
+	fmt.Println("Item transaction to delete:")
+	fmt.Println(itemTransactionId)
 
 	var itemTransaction ItemTransaction
 	db.Where("id = ?", itemTransactionId).First(&itemTransaction)

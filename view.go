@@ -4,6 +4,7 @@ import "time"
 
 type ProjectView struct {
 	ID                        uint              `json:"id"`
+	UUID                      string            `json:"uuid"`
 	Name                      string            `json:"name"`
 	Date                      time.Time         `json:"date"`
 	Transactions              []TransactionView `json:"transactions"`
@@ -14,6 +15,7 @@ type ProjectView struct {
 
 type TransactionView struct {
 	ID                uint                  `json:"id"`
+	UUID              string                `json:"uuid"`
 	Type              string                `json:"type"`
 	CustomPrice       int                   `json:"custom_price"`
 	Cashier           string                `json:"cashier"`
@@ -25,13 +27,15 @@ type TransactionView struct {
 }
 
 type ItemTransactionView struct {
-	ID   uint `json:"id"`
-	Qty  int  `json:"qty"`
-	Item Item `json:"item"`
+	ID   uint   `json:"id"`
+	UUID string `json:"uuid"`
+	Qty  int    `json:"qty"`
+	Item Item   `json:"item"`
 }
 
 type ItemView struct {
 	ID                 uint   `json:"id"`
+	UUID               string `json:"uuid"`
 	Name               string `json:"name"`
 	Desc               string `json:"desc"`
 	Price              int    `json:"price"`

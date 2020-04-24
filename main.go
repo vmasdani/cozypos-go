@@ -22,7 +22,14 @@ func main() {
 	r := mux.NewRouter()
 	InitRouters(&r)
 
-	handler := cors.Default().Handler(r)
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+		AllowedHeaders:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "DELETE"},
+		Debug:            true})
+	// handler := cors.Default().Handler(r)
+	handler := c.Handler(r)
 
 	// Populate() // If population is needed
 	http.ListenAndServe(":8080", handler)

@@ -8,6 +8,8 @@ import (
 	"log"
 	"strconv"
 	"strings"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 func readCsv(fileName string, parserFunc func(record []string)) {
@@ -66,7 +68,14 @@ func Populate() {
 			fmt.Printf("Name: %s, Desc: %s, Price: %d, Manuf. Price: %d\n", name, desc, price, manufacturingPrice)
 		}
 
+		uuid, err := uuid.NewV4()
+
+		if err != nil {
+			fmt.Println("ERror generating UUID")
+		}
+
 		newItem := Item{
+			UUID:               uuid.String(),
 			Name:               name,
 			Desc:               desc,
 			Price:              price,

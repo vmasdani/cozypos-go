@@ -27,6 +27,7 @@ type APIKey struct {
 // Item : table for storing items/inventory list
 type Item struct {
 	Model
+	UUID               string            `json:"uuid"`
 	Name               string            `gorm:"unique;not null" json:"name"`
 	Desc               string            `json:"desc"`
 	Price              int               `json:"price"`
@@ -39,21 +40,24 @@ type Item struct {
 // ItemStockIn : Item stock-in history
 type ItemStockIn struct {
 	Model
-	ItemID uint `json:"item_id"`
-	Qty    int  `json:"qty"`
+	UUID   string `json:"uuid"`
+	ItemID uint   `json:"item_id"`
+	Qty    int    `json:"qty"`
 }
 
 // ItemProject : Item reservation for project
 type ItemProject struct {
 	Model
-	ItemID    uint `json:"item_id"`
-	ProjectID uint `json:"project_id"`
-	Qty       int  `json:"qty"`
+	UUID      string `json:"uuid"`
+	ItemID    uint   `json:"item_id"`
+	ProjectID uint   `json:"project_id"`
+	Qty       int    `json:"qty"`
 }
 
 // Transaction : table for storing transactions
 type Transaction struct {
 	Model
+	UUID              string            `json:"uuid"`
 	Type              string            `json:"type"`
 	CustomPrice       int               `json:"custom_price"`
 	Cashier           string            `json:"cashier"`
@@ -64,14 +68,16 @@ type Transaction struct {
 // ItemTransaction : table for storing ItemTransaction
 type ItemTransaction struct {
 	Model
-	Qty           int  `json:"qty"`
-	ItemID        uint `json:"item_id"`
-	TransactionID uint `json:"transaction_id"`
+	UUID          string `json:"uuid"`
+	Qty           int    `json:"qty"`
+	ItemID        uint   `json:"item_id"`
+	TransactionID uint   `json:"transaction_id"`
 }
 
 // Project : table for storing projects
 type Project struct {
 	Model
+	UUID         string        `json:"uuid"`
 	Name         string        `json:"name"`
 	Date         time.Time     `json:"date"`
 	Transactions []Transaction `json:"transactions"`
