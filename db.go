@@ -22,7 +22,7 @@ func InitDb(db **gorm.DB) {
 	dbUsername := os.Getenv("DB_USERNAME")
 	dbPassword := os.Getenv("DB_PASSWORD")
 
-	dbUrl := fmt.Sprintf("%s:%s@/%s?parseTime=True&loc=Local", dbUsername, dbPassword, dbName)
+	dbUrl := fmt.Sprintf("%s:%s@/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUsername, dbPassword, dbName)
 
 	*db, dbErr = gorm.Open("mysql", dbUrl)
 

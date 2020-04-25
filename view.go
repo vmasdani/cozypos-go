@@ -49,3 +49,9 @@ type ItemView struct {
 type ApiKeyCheck struct {
 	APIKey string `json:"api_key"`
 }
+
+type Summary struct {
+	TotalFund    int `json:"total_fund"`
+	TotalRevenue int `json:"total_revenue"`
+	TotalProfit  int `json:"total_profit"`
+}

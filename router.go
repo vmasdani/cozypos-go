@@ -36,6 +36,12 @@ func InitRouters(r **mux.Router) {
 		}
 	})
 
+	// Old database adapter
+	(*r).HandleFunc("/adapt", AdaptHandler).Methods("GET")
+
+	// Summary
+	(*r).HandleFunc("/summary", GetSummary).Methods("GET")
+
 	// Items
 	(*r).HandleFunc("/items", GetAllItems).Methods("GET")
 	(*r).HandleFunc("/items/{id}", GetItem).Methods("GET")

@@ -2,19 +2,217 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/joho/godotenv"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/gorilla/mux"
 )
+
+// Adapter handler
+func AdaptHandler(w http.ResponseWriter, r *http.Request) {
+	// New project: CF
+	cfUuid, err := uuid.NewV4()
+	parsedCfTime, _ := time.Parse(time.RFC3339, "2020-02-23T00:00:00+07:00")
+
+	newProject := Project{
+		UUID: cfUuid.String(),
+		Name: "CF 14",
+		Date: parsedCfTime}
+
+	db.Save(&newProject)
+
+	// Read items csv
+	items, err := ioutil.ReadFile("csv/items.csv")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	itemsStr := string(items)
+	itemsCsv := csv.NewReader(strings.NewReader(itemsStr))
+
+	for {
+		record, err := itemsCsv.Read()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			fmt.Println("Error reading items csv", err)
+		}
+
+		uuid := record[0]
+		name := record[1]
+		desc := record[2]
+		price, err := strconv.Atoi(record[3])
+
+		newItem := Item{
+			UUID:  uuid,
+			Name:  name,
+			Desc:  desc,
+			Price: price}
+
+		// fmt.Println(newItem)
+		// fmt.Println(newItem)
+		db.Save(&newItem)
+	}
+
+	// Read transactions csv
+	transactions, err := ioutil.ReadFile("csv/transactions.csv")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	transactionsStr := string(transactions)
+	transactionsCsv := csv.NewReader(strings.NewReader(transactionsStr))
+
+	for {
+		record, err := transactionsCsv.Read()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			fmt.Println("Error reading transaction csv", err)
+		}
+
+		Uuid := record[0]
+		Type := record[1]
+		CustomPrice, err := strconv.Atoi(record[4])
+		Cashier := record[5]
+
+		if Type == "stock_in" {
+			newStockIn := ItemStockIn{
+				UUID: Uuid,
+				Pic:  Cashier,
+			}
+
+			db.Save(&newStockIn)
+
+		} else if Type == "sell" || Type == "auction" {
+			newTransaction := Transaction{
+				UUID:        Uuid,
+				Type:        Type,
+				CustomPrice: CustomPrice,
+				Cashier:     Cashier,
+				ProjectID:   newProject.ID}
+
+			// fmt.Println(newTransaction)
+			db.Save(&newTransaction)
+		}
+
+	}
+
+	// Read itemsTransactions csv
+	itemsTransactions, err := ioutil.ReadFile("csv/items_transactions.csv")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	itemsTransactionsStr := string(itemsTransactions)
+	itemsTransctionsCsv := csv.NewReader(strings.NewReader(itemsTransactionsStr))
+
+	for {
+		record, err := itemsTransctionsCsv.Read()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			fmt.Println("Error reading items transaction csv", err)
+		}
+
+		uuid := record[0]
+		qty, err := strconv.Atoi(record[1])
+		itemUuid := record[2]
+		transactionUuid := record[3]
+
+		var item Item
+		db.Where("uuid = ?", itemUuid).First(&item)
+
+		var transaction Transaction
+		if db.Where("uuid = ?", transactionUuid).First(&transaction).RecordNotFound() {
+			var itemStockIn ItemStockIn
+			db.Where("uuid = ?", transactionUuid).First(&itemStockIn)
+
+			itemStockIn.ItemID = item.ID
+			itemStockIn.Qty = qty
+
+			db.Save(&itemStockIn)
+		} else {
+			newItemTransaction := ItemTransaction{
+				UUID:          uuid,
+				Qty:           qty,
+				ItemID:        item.ID,
+				TransactionID: transaction.ID}
+
+			// fmt.Println(newItemTransaction)
+			db.Save(&newItemTransaction)
+		}
+	}
+}
+
+// Summary
+func GetSummary(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var itemStockIns []ItemStockIn
+	db.Find(&itemStockIns)
+
+	totalFund := 0
+	totalRevenue := 0
+
+	for _, stockIn := range itemStockIns {
+		var foundItem Item
+		db.First(&foundItem, stockIn.ItemID)
+
+		totalFund += stockIn.Qty * foundItem.ManufacturingPrice
+	}
+
+	var transactions []Transaction
+	db.Preload("ItemsTransactions").Find(&transactions)
+
+	for _, transaction := range transactions {
+		totalPrice := 0
+
+		for _, itemTransaction := range transaction.ItemsTransactions {
+			var foundItem Item
+			db.First(&foundItem, itemTransaction.ItemID)
+
+			totalPrice += itemTransaction.Qty * foundItem.Price
+		}
+
+		if transaction.CustomPrice > 0 {
+			totalRevenue += transaction.CustomPrice
+		} else {
+			totalRevenue += totalPrice
+		}
+	}
+
+	json.NewEncoder(w).Encode(Summary{
+		TotalFund:    totalFund,
+		TotalRevenue: totalRevenue,
+		TotalProfit:  totalRevenue - totalFund})
+}
 
 // Item
 func GetAllItems(w http.ResponseWriter, r *http.Request) {
@@ -561,6 +759,7 @@ func PostProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db.Save(&project)
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(project)
 }
 
