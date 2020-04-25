@@ -62,6 +62,7 @@ func InitRouters(r **mux.Router) {
 
 	// Login
 	(*r).HandleFunc("/login", LoginHandler).Methods("POST")
+	(*r).HandleFunc("/check-api-key", CheckApiKeyHandler).Methods("POST")
 
 	// Project
 	(*r).HandleFunc("/projects", GetAllProjects).Methods("GET")

@@ -86,7 +86,8 @@ func GetItem(w http.ResponseWriter, r *http.Request) {
 		Desc:               foundItem.Desc,
 		Price:              foundItem.Price,
 		ManufacturingPrice: foundItem.ManufacturingPrice,
-		Qty:                totalQty}
+		Qty:                totalQty,
+		ItemStockIns:       foundItem.ItemStockIns}
 
 	json.NewEncoder(w).Encode(itemView)
 }
@@ -404,6 +405,22 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Api key: %s\n", apiKey)
 
 	fmt.Fprintf(w, "%s", apiKey)
+
+	apiKeyToSave := APIKey{APIKey: apiKey}
+	db.Save(&apiKeyToSave)
+}
+
+func CheckApiKeyHandler(w http.ResponseWriter, r *http.Request) {
+	var apiKey ApiKeyCheck
+	json.NewDecoder(r.Body).Decode(&apiKey)
+
+	var foundAPIKey APIKey
+	if db.Where("api_key = ?", apiKey.APIKey).First(&foundAPIKey).RecordNotFound() {
+		fmt.Println("Found api key:")
+		fmt.Println(foundAPIKey)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 }
 
 // Project

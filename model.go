@@ -41,6 +41,7 @@ type Item struct {
 type ItemStockIn struct {
 	Model
 	UUID   string `json:"uuid"`
+	Pic    string `json:"pic"`
 	ItemID uint   `json:"item_id"`
 	Qty    int    `json:"qty"`
 }

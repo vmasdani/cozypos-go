@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var noAuthUris = []string{"/generate", "/hello", "/login"}
+var noAuthUris = []string{"/generate", "/hello", "/login", "/check-api-key"}
 
 func AuthorizationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +47,8 @@ func AuthorizationMiddleware(next http.Handler) http.Handler {
 
 		if db.Where("api_key = ?", token).First(&apiKey).RecordNotFound() {
 			fmt.Println("API key not found!")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
 		} else {
 			fmt.Println("Api key found!")
 		}

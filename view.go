@@ -34,13 +34,18 @@ type ItemTransactionView struct {
 }
 
 type ItemView struct {
-	ID                 uint   `json:"id"`
-	UUID               string `json:"uuid"`
-	Name               string `json:"name"`
-	Desc               string `json:"desc"`
-	Price              int    `json:"price"`
-	ManufacturingPrice int    `json:"manufacturing_price"`
-	Qty                int    `json:"qty"`
-	Reserved           int    `json:"reserved"`
-	Sold               int    `json:"sold"`
+	ID                 uint          `json:"id"`
+	UUID               string        `json:"uuid"`
+	Name               string        `json:"name"`
+	Desc               string        `json:"desc"`
+	Price              int           `json:"price"`
+	ManufacturingPrice int           `json:"manufacturing_price"`
+	Qty                int           `json:"qty"`
+	Reserved           int           `json:"reserved"`
+	Sold               int           `json:"sold"`
+	ItemStockIns       []ItemStockIn `json:"item_stock_ins"`
+}
+
+type ApiKeyCheck struct {
+	APIKey string `json:"api_key"`
 }
