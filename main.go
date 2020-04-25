@@ -26,8 +26,8 @@ func main() {
 		AllowedOrigins:   []string{"*"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "DELETE"},
-		Debug:            true})
+		AllowedMethods:   []string{"GET", "POST", "DELETE"}})
+	// Debug:            true})
 	// handler := cors.Default().Handler(r)
 	handler := c.Handler(r)
 

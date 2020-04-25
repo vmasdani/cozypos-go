@@ -129,7 +129,7 @@ func PostItem(w http.ResponseWriter, r *http.Request) {
 func StockItemIn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	fmt.Println(r.Body)
+	// fmt.Println(r.Body)
 
 	var itemStockIn ItemStockIn
 	json.NewDecoder(r.Body).Decode(&itemStockIn)
@@ -232,19 +232,19 @@ func GetTransaction(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt:         transaction.UpdatedAt,
 		ProjectID:         transaction.ProjectID}
 
-	fmt.Println(transactionView)
+	// fmt.Println(transactionView)
 
 	json.NewEncoder(w).Encode(transactionView)
 }
 
 func PostTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Printf("Username: %s\n", r.Header.Get("Username"))
+	// fmt.Printf("Username: %s\n", r.Header.Get("Username"))
 
 	var transaction Transaction
 	json.NewDecoder(r.Body).Decode(&transaction)
 
-	fmt.Println("Transaction to save", transaction)
+	// fmt.Println("Transaction to save", transaction)
 
 	db.Save(&transaction)
 
@@ -295,12 +295,12 @@ func GetAllItemsTransactions(w http.ResponseWriter, r *http.Request) {
 func PostItemTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	fmt.Println(r.Body)
+	// fmt.Println(r.Body)
 
 	var itemTransaction ItemTransaction
 	json.NewDecoder(r.Body).Decode(&itemTransaction)
 
-	fmt.Println("item transaction to insert", itemTransaction)
+	// fmt.Println("item transaction to insert", itemTransaction)
 
 	db.Save(&itemTransaction)
 
@@ -309,8 +309,8 @@ func PostItemTransaction(w http.ResponseWriter, r *http.Request) {
 
 func DeleteItemTransaction(w http.ResponseWriter, r *http.Request) {
 	itemTransactionId := mux.Vars(r)["id"]
-	fmt.Println("Item transaction to delete:")
-	fmt.Println(itemTransactionId)
+	// fmt.Println("Item transaction to delete:")
+	// fmt.Println(itemTransactionId)
 
 	var itemTransaction ItemTransaction
 	db.Where("id = ?", itemTransactionId).First(&itemTransaction)
@@ -368,7 +368,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	passwordBytes := []byte(loginInfo.Password)
 
 	loginErr := bcrypt.CompareHashAndPassword(secretCodeBytes, passwordBytes)
-	secretHash, generateSecretError := bcrypt.GenerateFromPassword(passwordBytes, bcrypt.DefaultCost)
+	// secretHash, generateSecretError := bcrypt.GenerateFromPassword(passwordBytes, bcrypt.DefaultCost)
 
 	if loginErr != nil {
 		fmt.Println("Password do not match!")
@@ -376,9 +376,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if generateSecretError == nil {
-		fmt.Println(string(secretHash))
-	}
+	// if generateSecretError == nil {
+	// 	fmt.Println(string(secretHash))
+	// }
 
 	// Generate api key
 	timestamp := time.Now().Unix()
@@ -396,13 +396,13 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	apiKey := fmt.Sprintf("%s:%s", usernameBase64, keyBase64)
 
-	fmt.Println(usernameBase64)
-	fmt.Println(keyBase64)
+	// fmt.Println(usernameBase64)
+	// fmt.Println(keyBase64)
 
 	// bcrypt.GeneratePassword([]byte())
 
-	fmt.Printf("Secret code: %s\n", secretCode)
-	fmt.Printf("Api key: %s\n", apiKey)
+	// fmt.Printf("Secret code: %s\n", secretCode)
+	// fmt.Printf("Api key: %s\n", apiKey)
 
 	fmt.Fprintf(w, "%s", apiKey)
 
@@ -416,8 +416,8 @@ func CheckApiKeyHandler(w http.ResponseWriter, r *http.Request) {
 
 	var foundAPIKey APIKey
 	if db.Where("api_key = ?", apiKey.APIKey).First(&foundAPIKey).RecordNotFound() {
-		fmt.Println("Found api key:")
-		fmt.Println(foundAPIKey)
+		// fmt.Println("Found api key:")
+		// fmt.Println(foundAPIKey)
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -442,9 +442,9 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	totalRevenue := 0
 	projectRevenue := 0
 
-	fmt.Println(projectManufacturingPrice)
-	fmt.Println(totalRevenue)
-	fmt.Println(projectRevenue)
+	// fmt.Println(projectManufacturingPrice)
+	// fmt.Println(totalRevenue)
+	// fmt.Println(projectRevenue)
 
 	var project Project
 	db.Where("id = ?", id).First(&project)
@@ -528,8 +528,8 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 		ProjectManufacturingPrice: uint(projectManufacturingPrice),
 		Transactions:              transactionViews}
 
-	fmt.Println("Project:")
-	fmt.Println(projectView)
+	// fmt.Println("Project:")
+	// fmt.Println(projectView)
 
 	// fmt.Println("Transactions:")
 	// for _, transaction := range project.Transactions {
