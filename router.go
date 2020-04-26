@@ -77,5 +77,8 @@ func InitRouters(r **mux.Router) {
 	(*r).HandleFunc("/projects", PostProject).Methods("POST")
 	(*r).HandleFunc("/projects/{id}", DeleteProject).Methods("DELETE")
 
+	// CSV Report
+	(*r).HandleFunc("/report", GetReportCsv).Methods("GET")
+
 	(*r).Use(AuthorizationMiddleware)
 }

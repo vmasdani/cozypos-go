@@ -17,6 +17,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/joho/godotenv"
+	"github.com/leekchan/accounting"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/gorilla/mux"
@@ -771,4 +772,58 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 	db.First(&project, id)
 
 	db.Delete(&project)
+}
+
+func GetReportCsv(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/csv")
+	projectId := r.URL.Query()["projectid"]
+
+	if len(projectId) > 0 {
+		projectIdInt, _ := strconv.Atoi(projectId[0])
+
+		var foundProject Project
+		db.Preload("Transactions").First(&foundProject, projectIdInt)
+
+		reportCsvStr := fmt.Sprintf("REPORT COZY PROD FOR %s\n\n", foundProject.Name)
+
+		projectRevenue := 0
+		ac := accounting.Accounting{Symbol: "Rp ", Thousand: ".", Decimal: ","}
+
+		for _, transaction := range foundProject.Transactions {
+			var itemsTransactions []ItemTransaction
+			db.Where("transaction_id = ?", transaction.ID).Find(&itemsTransactions)
+
+			totalPrice := 0
+			transactionCsv := fmt.Sprintf("Date: %s\nItem,Price,Qty,Total\n", transaction.CreatedAt)
+
+			for _, itemTransaction := range itemsTransactions {
+				var foundItem Item
+				db.First(&foundItem, itemTransaction.ItemID)
+
+				transactionCsv += fmt.Sprintf("%s,%s,%d,%s\n", foundItem.Name, ac.FormatMoney(foundItem.Price), itemTransaction.Qty, ac.FormatMoney(itemTransaction.Qty*foundItem.Price))
+
+				totalPrice += itemTransaction.Qty * foundItem.Price
+			}
+
+			transactionCsv += fmt.Sprintf("Total,,,%s\n", ac.FormatMoney(totalPrice))
+			transactionCsv += fmt.Sprintf("Custom Price,,,%s\n", ac.FormatMoney(transaction.CustomPrice))
+
+			if transaction.CustomPrice > 0 {
+				transactionCsv += fmt.Sprintf("Final,,,%s\n\n", ac.FormatMoney(transaction.CustomPrice))
+				projectRevenue += transaction.CustomPrice
+			} else {
+				transactionCsv += fmt.Sprintf("Final,,,%s\n\n", ac.FormatMoney(totalPrice))
+				projectRevenue += totalPrice
+			}
+
+			reportCsvStr += transactionCsv
+		}
+
+		reportCsvStr += fmt.Sprintf("\nTotal Revenue,%s\n", ac.FormatMoney(projectRevenue))
+
+		// fmt.Println(reportCsvStr)
+
+		fmt.Fprintln(w, reportCsvStr)
+	}
+
 }
